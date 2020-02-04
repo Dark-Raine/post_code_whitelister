@@ -1,19 +1,22 @@
 class PostcodeService
     API_SEARCH_URL = "http://postcodes.io/postcodes/"
 
-    attr_accessor :postcode, :response
+    attr_accessor :postcode, :response, :whitelisted
 
     def initialize(postcode)
         @postcode = postcode
         @response = nil
+        @whitelisted = false
     end
 
     def search
         if !white_listed?
             encoded_postcode = URI::encode(postcode.code)
             @response = HTTParty.get(API_SEARCH_URL+encoded_postcode)
+        else
+            @whitelisted = true
+            {seccess?: true, postcode: white_listed?, lsoa: white_listed?.lsoa, errors: nil}
         end
-        "whitelisted"
     end
 
     def validate
@@ -27,22 +30,27 @@ class PostcodeService
                 r_lsoa.include?(white_listed_lsoa.name)
             end
             if validated
-                to_whitelist = {seccess?: true, postcode: @response.dig("result","postcode"), lsoa: validated, errors: nil}
+                @postcode.lsoa = validated
+                @postcode.save
+               return to_whitelist = {seccess?: true, postcode: @response.dig("result","postcode"), lsoa: validated, errors: nil}
             end
-            to_whitelist = {seccess?: false, postcode: @response.dig("result","postcode"), lsoa: validated, errors: "Not servicable"}
-        else        
+            to_whitelist = {seccess?: false, postcode: @postcode, lsoa: validated, errors: "Not servicable"}
+        else  
+            custom_lsoa = Lsoa.find_by(name:"CUSTOM") || Lsoa.create(name:"CUSTOM")
+            @postcode.lsoa = custom_lsoa
+            @postcode.save
             to_whitelist = {seccess?: true, postcode: @postcode.code, lsoa: nil, errors: nil}
         end
     end
 
     def white_listed?
-        !!Postcode.find_by(code: @postcode.code)
+        Postcode.find_by(code: @postcode.code)
     end
 
 
     def execute
-        search
-        validate
+      ret = search
+      !@whitelisted ? validate : ret
     end
     
 end
