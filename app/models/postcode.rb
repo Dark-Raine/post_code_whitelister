@@ -20,7 +20,7 @@ class Postcode < ApplicationRecord
     end
 
     def self.build(code)
-        new(code: code).tap do |postcode|
+        new(code).tap do |postcode|
             postcode.formatter
         end
     end

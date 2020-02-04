@@ -1,5 +1,7 @@
+<%= link_to "Whitelist postcodes form", new_postcode_path%>
 <% @postcodes.each do |postcode| %>
     <h1><%= postcode.code %></h1>
     <h2><%= postcode.lsoa.name %></h2>
+    <%= link_to "Remove postcode", postcode_path(postcode), method: :delete%>
     <hr>
 <% end %>
