@@ -1,0 +1,10 @@
+<%= link_to "Whitelisted postcodes", postcodes_path%>
+<%= form_with model: @postcode do |f| %>
+  <%= f.text_field :code %>
+  <%= f.submit "Whitelisted?" %>
+<% end %>
+<% flash.each do |type, msg| %>
+  <h3 style="color: red;">
+    <%= msg %>
+  </h3>
+<% end %>
